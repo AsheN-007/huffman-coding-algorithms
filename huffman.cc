@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <chrono>
 
 using namespace std;
 
@@ -157,24 +158,34 @@ void decodeFile(ifstream& inFile) {
 }
 
 void usage() {
-    cout << "Usage: ./huffman {-e | -d} {file}\n";
+    cout << "Usage: ./huffman {-e | -d} (-t) {file}\n";
     exit(1);
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) usage();
-
+    if (argc < 3 || argc > 5) usage();
     string mode = argv[1];
+    int position_of_file = 2;
+    bool calculate_time = false;
     if (mode != "-e" && mode != "-d") usage();
-
-    ifstream inFile(argv[2], ios::binary);
+    
+    if ((string) argv[2] == "-t") {
+        calculate_time = true;
+        position_of_file = 3;
+    }
+    ifstream inFile(argv[position_of_file], ios::binary);
     if (!inFile) {
         cerr << "Error: Could not open file " << argv[2] << "\n";
         return 1;
     }
-
+    chrono::time_point<std::chrono::steady_clock> inicio, fin;
+    if (calculate_time) inicio = std::chrono::steady_clock::now();
     if (mode == "-e") encodeFile(inFile);
     else              decodeFile(inFile);
-
+    if (calculate_time) {
+        fin = chrono::steady_clock::now();
+        chrono::duration<double, milli> duracion_ms = fin - inicio;
+        cout << "Tiempo transcurrido: " << duracion_ms.count() << " ms\n";
+    }
     return 0;
 }
